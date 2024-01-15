@@ -6,8 +6,6 @@ This repository contains the backend implementation of a user authentication sys
 
 - **User Signup:** Create an account with a unique email address and a securely hashed password.
 - **User Login:** Authenticate users with email and password, utilizing bcrypt for password hashing.
-- **MongoDB Integration:** Utilizes MongoDB for data storage, connected via Mongoose.
-- **Error Handling:** Robust error handling for better debugging and user feedback.
 - **JSON Web Tokens (JWT):** Potential for future implementation of JWT-based authentication.
 - **Express Routing:** Organized routes for signup and login functionalities using Express.js.
 - **Database Connection:** Configured MongoDB connection using dotenv for environment variable management.
