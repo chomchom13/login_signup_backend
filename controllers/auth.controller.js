@@ -1,7 +1,9 @@
 import { userModel } from "../models/user.model.js";
 import bcryptjs from "bcryptjs";
+import jwt from "jsonwebtoken";
+import { errorHandler } from "../utils/error.js";
 
-const signup = async (req, res) => {
+const signup = async (req, res, next) => {
   const { name, email, password } = req.body;
   const hashedPassword = bcryptjs.hashSync(password, 10); // hashSync method waits for the hashedPassword to generate so we don't need to use await here.
   const newUser = new userModel({ name, email, password: hashedPassword });
@@ -9,24 +11,35 @@ const signup = async (req, res) => {
     await newUser.save();
     res.status(201).json({ message: "User created successfully" });
   } catch (error) {
-    console.error("Cannot create user", error);
-    res.status(500).json({ error: "Internal Server Error" });
+    next(error);
   }
 };
 
-const login = async (req, res) => {
+const login = async (req, res, next) => {
   const { email, password } = req.body;
   try {
     const validUser = await userModel.findOne({ email: email });
-    if (!validUser) return res.status(500).json({ message: "User not found" });
+    if (!validUser) return next(errorHandler(404, "User not found!"));
     const validPassword = bcryptjs.compareSync(password, validUser.password);
-    if (!validPassword) return res.json({ message: "Wrong Credentials " });
-    const {password: pass, ...rest} = validUser._doc
-    res.status(200).json(rest);
+    if (!validPassword) return next(errorHandler(401, "Wrong credentials!"));
+    const token = jwt.sign({ id: validUser._id }, process.env.JWT_SECRET);
+    const { password: pass, ...rest } = validUser._doc;
+    res
+      .cookie("access_token", token, { httpOnly: true })
+      .status(200)
+      .json(rest);
   } catch (error) {
-    console.error("Cannot login user", error);
-    res.status(500).json({ error: "Internal Server Error" });
+    next(error);
   }
 };
 
-export { signup, login }; //hi
+const logout = async (req, res, next) => {
+  try {
+    res.clearCookie("access_token");
+    res.status(200).json({ message: "User has been logged out!" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export { signup, login, logout };
